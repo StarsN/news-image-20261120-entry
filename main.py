@@ -20,15 +20,76 @@ GOLD = (176, 132, 44)
 PANEL = (240, 234, 220)
 CARD = (255, 253, 248)
 
-FONT_DIR = "/usr/share/fonts/truetype/noto"
-SERIF_B = os.path.join(FONT_DIR, "NotoSerif-Bold.ttf")
-SANS_B = os.path.join(FONT_DIR, "NotoSans-Bold.ttf")
-SANS_SB = os.path.join(FONT_DIR, "NotoSans-SemiBold.ttf")
-SANS_R = os.path.join(FONT_DIR, "NotoSans-Regular.ttf")
+# Font loading is defensive: the runner image is not guaranteed to ship
+# the exact Noto files this page was designed with, and a missing file
+# must degrade to an equivalent face — never crash. Each role lists its
+# preferred file first (so output is unchanged where Noto exists), then
+# same-role equivalents from the other common font families, and the
+# last resort is PIL's bundled default font.
+FONT_DIRS = [
+    "/usr/share/fonts/truetype/noto",
+    "/usr/share/fonts/truetype/noto-core",
+    "/usr/share/fonts/truetype/dejavu",
+    "/usr/share/fonts/truetype/liberation",
+    "/usr/share/fonts/truetype/liberation2",
+    "/usr/share/fonts/truetype",
+    "/usr/share/fonts",
+]
+FONT_FILES = {
+    "serif_b": ["NotoSerif-Bold.ttf",
+                "DejaVuSerif-Bold.ttf", "LiberationSerif-Bold.ttf"],
+    "sans_b": ["NotoSans-Bold.ttf",
+               "DejaVuSans-Bold.ttf", "LiberationSans-Bold.ttf"],
+    "sans_sb": ["NotoSans-SemiBold.ttf", "NotoSans-Bold.ttf",
+                "DejaVuSans-Bold.ttf", "LiberationSans-Bold.ttf"],
+    "sans_r": ["NotoSans-Regular.ttf",
+               "DejaVuSans.ttf", "LiberationSans-Regular.ttf"],
+}
+SERIF_B = "serif_b"
+SANS_B = "sans_b"
+SANS_SB = "sans_sb"
+SANS_R = "sans_r"
+
+_font_cache = {}
 
 
-def font(path, size):
-    return ImageFont.truetype(path, size)
+def font(role, size):
+    """Resolve a font role at a size; never raises."""
+    key = (role, size)
+    if key in _font_cache:
+        return _font_cache[key]
+    fnt = None
+    for name in FONT_FILES[role]:
+        for font_dir in FONT_DIRS:
+            path = os.path.join(font_dir, name)
+            if not os.path.isfile(path):
+                continue
+            try:
+                fnt = ImageFont.truetype(path, size)
+            except (OSError, IOError):
+                fnt = None
+                continue
+            break
+        if fnt is not None:
+            break
+    if fnt is None:
+        try:
+            fnt = ImageFont.load_default(size)
+        except Exception:
+            fnt = ImageFont.load_default()
+    _font_cache[key] = fnt
+    return fnt
+
+
+def fit_font(role, size, text, max_w, draw):
+    """Step a size down until the text fits max_w (for fallback faces
+    that run wider than Noto). A no-op when the text already fits, so
+    the designed layout is untouched where the preferred fonts exist."""
+    fnt = font(role, size)
+    while draw.textlength(text, font=fnt) > max_w and size > 12:
+        size -= 1
+        fnt = font(role, size)
+    return fnt
 
 
 def wrap(draw, text, fnt, max_w):
@@ -67,12 +128,12 @@ CW = RIGHT - MX  # 948
 # ---------------------------------------------------------------- masthead
 d.line([(MX, 26), (RIGHT, 26)], fill=INK, width=3)
 title = "THE WORLD IN ONE PICTURE"
-tf = font(SERIF_B, 63)
+tf = fit_font(SERIF_B, 63, title, CW, d)
 d.text(((W - d.textlength(title, font=tf)) / 2, 40), title, font=tf, fill=INK)
 d.line([(MX, 122), (RIGHT, 122)], fill=INK, width=5)
 d.line([(MX, 131), (RIGHT, 131)], fill=INK, width=1)
 date = "FRIDAY 20 NOVEMBER 2026"
-df = font(SANS_B, 31)
+df = fit_font(SANS_B, 31, date, CW, d)
 d.text(((W - d.textlength(date, font=df)) / 2, 143), date, font=df, fill=INK)
 side_f = font(SANS_SB, 16)
 d.text((MX, 151), "ONE DAY'S WORLD NEWS", font=side_f, fill=MUTE)
