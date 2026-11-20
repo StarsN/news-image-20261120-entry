@@ -84,9 +84,11 @@ d.line([(MX, 184), (RIGHT, 184)], fill=INK, width=2)
 y = 198
 y = kick(d, MX, y, "THE HAGUE — WORLD COURT", RED)
 hf = font(SERIF_B, 44)
+# display leading: 50/44 (~1.14x) — tighter than body ratios, as
+# headlines are set in print, and it buys air for the foot of the page
 y = block(d, MX, y,
           "World Court: Myanmar committed genocide against the Rohingya",
-          hf, CW, 52)
+          hf, CW, 50)
 y += 8
 # scales glyph panel at right of the lead body
 GW, GH = 252, 96
@@ -182,21 +184,23 @@ for i, (kick_t, color, head, body) in enumerate(cards):
     for line in measured[i][1]:
         d.text((x + 14, yy), line, font=bf3, fill=INK)
         yy += 20
-y += card_h + 12
+y += card_h + 10
 
 # ---------------------------------------------------------------- row 4 minis
+# set slightly tighter (10px rule gap, 23px leading) so the closing
+# stories end with clear air above the ticker bar instead of crowding it
 HALF = (CW - 24) // 2
 bf4 = font(SANS_R, 18)
 ym = kick(d, MX, y, "KENYA — HEALTH", SLATE, size=17)
 block(d, MX, ym,
       "Last Ebola patient goes home in Nairobi — discharged 37 days "
-      "after the country's first case.", bf4, HALF, 24)
+      "after the country's first case.", bf4, HALF, 23)
 x2 = MX + HALF + 24
 ym2 = kick(d, x2, y, "GAMES — RECORD LAUNCH", RED, size=17)
 y_end = block(d, x2, ym2,
               "GTA 6 earns $2.36bn in one day: 24.6m copies, an "
               "entertainment record (Sensor Tower est.).",
-              bf4, HALF, 24)
+              bf4, HALF, 23)
 print("content ends at y =", y_end, "(ticker starts 972)")
 
 # ---------------------------------------------------------------- ticker

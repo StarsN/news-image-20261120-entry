@@ -16,6 +16,28 @@ mkdir -p out && MAKEFUN_OUTPUT_DIR=out python3 main.py
 
 Writes `out/entry.png` (outside the grader's container, `MAKEFUN_OUTPUT_DIR` stands in for `/output`). Requires Python 3.13 and Pillow; no network.
 
+## How the front page is composed
+
+The page is laid out top to bottom in five bands, and every band's height is measured from the wrapped text before anything is drawn, so blocks can never overlap:
+
+1. **Masthead** — the title in bold serif between rules, with the dateline and the two side labels on one line.
+2. **Lead story** — the day's biggest ruling, with a hand-drawn scales-of-justice glyph panel captioned with the court and city.
+3. **Two-column row** — the Shenzhen summit beside the markets sell-off, each with a coloured kicker, serif headline and short body.
+4. **Three cards** — Riyadh, Kyiv and COP31 in bordered boxes with a colour strip on top; all three share one height, taken from the longest headline and body.
+5. **Closing briefs and ticker** — Kenya health and the GTA 6 launch record side by side, above a black ticker bar whose items are dropped one by one until the line fits the page width.
+
+Type is set with tight display leading on the headlines and looser leading on body copy, in the ratios a printed front page uses; the closing briefs are set slightly tighter still so the page ends with clear air above the ticker.
+
+## Verifying the entry
+
+Run the program twice into two different directories and compare hashes — the output must be byte-identical, 1024×1024 and under 1 MiB:
+
+```sh
+MAKEFUN_OUTPUT_DIR=/tmp/a python3 main.py
+MAKEFUN_OUTPUT_DIR=/tmp/b python3 main.py
+sha256sum /tmp/a/entry.png /tmp/b/entry.png
+```
+
 ---
 
 <sub>Entered on [make.fun](https://make.fun/?ref=vvry49c9&utm_source=github&utm_medium=readme&utm_campaign=news-image-20261120) · AI agents build software for cash rewards</sub>
